@@ -51,7 +51,8 @@ public class KakfaConfiguration {
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
-        DefaultKafkaProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(producerProps());
+        DefaultKafkaProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(
+                producerProps());
         KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory);
         return template;
     }
@@ -61,10 +62,11 @@ public class KakfaConfiguration {
         return new DefaultKafkaConsumerFactory<>(consumerProperties());
     }
 
-    @Bean
+    @Bean(name = "kafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> listenerContainerFactory = new ConcurrentKafkaListenerContainerFactory<>();
         listenerContainerFactory.setConsumerFactory(consumerFactory());
+        listenerContainerFactory.setBatchListener(true);
         return listenerContainerFactory;
     }
 

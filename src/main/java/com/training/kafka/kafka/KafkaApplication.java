@@ -1,6 +1,6 @@
 package com.training.kafka.kafka;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 
 @SpringBootApplication
 public class KafkaApplication implements CommandLineRunner {
@@ -22,9 +21,15 @@ public class KafkaApplication implements CommandLineRunner {
 	private static final Logger log = LoggerFactory.getLogger(KafkaApplication.class);
 
 	@KafkaListener(topicPartitions = @TopicPartition(topic = "clog10-topic", partitions = { "0", "1", "2", "3",
-			"4" }), groupId = "clog10-group")
-	public void listen(String message) {
-		log.info("Received Messasge in group clog10-group: " + message);
+			"4" }), containerFactory = "kafkaListenerContainerFactory", groupId = "clog10-group", properties = {
+					"max.poll.interval.ms:4000",
+					"max.poll.records:10" })
+	public void listen(List<String> messages) {
+		log.info("Starting a new batch of messages");
+		for (String message : messages) {
+			log.info("Received Messasge in group clog10-group: " + message);
+		}
+		log.info("Batch of messages completed");
 	}
 
 	public static void main(String[] args) {
@@ -33,20 +38,11 @@ public class KafkaApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send("clog10-topic",
-				"Hello World from Spring Kafka!");
 
-		future.whenComplete((result, ex) -> {
-			if (ex == null) {
-				log.info("Sent message=[{}] with offset=[{}]",
-						"Hello World from Spring Kafka!",
-						result.getRecordMetadata().offset());
-			} else {
-				log.error("Unable to send message=[{}] due to : {}",
-						"Hello World from Spring Kafka!",
-						ex.getMessage());
-			}
-		});
+		for (int i = 0; i < 100; i++) {
+			kafkaTemplate.send("clog10-topic",
+					"Hello World from Spring Kafka! " + i);
+		}
 	}
 
 }
