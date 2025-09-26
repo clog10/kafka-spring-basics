@@ -66,6 +66,7 @@ public class KakfaConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, String> listenerContainerFactory = new ConcurrentKafkaListenerContainerFactory<>();
         listenerContainerFactory.setConsumerFactory(consumerFactory());
         listenerContainerFactory.setBatchListener(true);
+        listenerContainerFactory.setConcurrency(5);
         return listenerContainerFactory;
     }
 
