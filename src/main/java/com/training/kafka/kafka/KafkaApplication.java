@@ -11,6 +11,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @SpringBootApplication
@@ -19,9 +20,12 @@ public class KafkaApplication implements CommandLineRunner {
 	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
 
+	@Autowired
+	private KafkaListenerEndpointRegistry registry;
+
 	private static final Logger log = LoggerFactory.getLogger(KafkaApplication.class);
 
-	@KafkaListener(topicPartitions = @TopicPartition(topic = "clog10-topic", partitions = { "0", "1", "2", "3",
+	@KafkaListener(id="clog10", autoStartup="false", topicPartitions = @TopicPartition(topic = "clog10-topic", partitions = { "0", "1", "2", "3",
 			"4" }), containerFactory = "kafkaListenerContainerFactory", groupId = "clog10-group", properties = {
 					"max.poll.interval.ms:4000",
 					"max.poll.records:10" })
@@ -45,6 +49,12 @@ public class KafkaApplication implements CommandLineRunner {
 			kafkaTemplate.send("clog10-topic", String.valueOf(i),
 					"Hello World from Spring Kafka! " + i);
 		}
+		log.info("Waiting to start");
+		Thread.sleep(5000);
+				log.info("Starting");
+		registry.getListenerContainer("clog10").start();
+		Thread.sleep(5000);
+		registry.getListenerContainer("clog10").stop();
 	}
 
 }
