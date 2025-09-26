@@ -14,8 +14,15 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.MicrometerProducerListener;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 
 @Configuration
+@EnableScheduling
 public class KakfaConfiguration {
 
     private Map<String, Object> producerProps() {
@@ -52,6 +59,9 @@ public class KakfaConfiguration {
     public KafkaTemplate<String, String> kafkaTemplate() {
         DefaultKafkaProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(
                 producerProps());
+
+        producerFactory.addListener(new MicrometerProducerListener<>(meterRegisry()));
+
         KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory);
         return template;
     }
@@ -68,6 +78,12 @@ public class KakfaConfiguration {
         listenerContainerFactory.setBatchListener(true);
         listenerContainerFactory.setConcurrency(5);
         return listenerContainerFactory;
+    }
+
+    @Bean
+    public MeterRegistry meterRegisry() {
+        PrometheusMeterRegistry meter = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        return meter;
     }
 
 }
